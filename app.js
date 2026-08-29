@@ -30,6 +30,35 @@ app.use(cors({
     allowedHeaders: "Content-Type, Accept, Authorization",
 }));
 
+app.use((req, res, next) => {
+    const originalSend = res.send.bind(res);
+
+    res.send = (body) => {
+        if (res.statusCode >= 400) {
+            let errorMessage = "Unknown error";
+
+            if (typeof body === "string") {
+                try {
+                    const parsedBody = JSON.parse(body);
+                    errorMessage = parsedBody.message || body;
+                } catch {
+                    errorMessage = body;
+                }
+            } else if (body?.message) {
+                errorMessage = body.message;
+            }
+
+            logger(
+                `${new Date().toISOString()} ${res.statusCode} ${errorMessage}`
+            );
+        }
+
+        return originalSend(body);
+    };
+
+    next();
+});
+
 app.use(morgan((tokens, req, res) => {
     const status = Number(tokens.status(req, res));
 
@@ -40,10 +69,6 @@ app.use(morgan((tokens, req, res) => {
         tokens.status(req, res),
         `${tokens["response-time"](req, res)} ms`,
     ].join(" ");
-
-    if (status >= 400) {
-        logger(message);
-    }
 
     return status >= 400
         ? chalk.red(message)
