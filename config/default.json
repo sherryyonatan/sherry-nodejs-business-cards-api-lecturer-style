@@ -1,0 +1,6 @@
+{
+  "PORT": 1986,
+  "JWT_SECRET": "development-secret-change-me",
+  "MONGO_URL": "mongodb://127.0.0.1:27017/business_cards",
+  "FRONTEND_URL": "http://localhost:5173"
+}
